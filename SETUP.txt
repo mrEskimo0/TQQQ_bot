@@ -1,0 +1,29 @@
+Pre-Testing Setup
+=================
+
+1. Install dependencies
+   pip install -r requirements.txt
+
+2. Create a .env file in the project root with the following:
+   SCHWAB_APP_KEY=your_app_key
+   SCHWAB_APP_SECRET=your_app_secret
+   SCHWAB_ACCOUNT_HASH=your_account_hash
+   DRY_RUN=True
+
+   Override default paths for local dev (defaults point to /var/lib and /var/log):
+   SCHWAB_TOKEN_PATH=./schwab_token.json
+   DB_PATH=./tqqq.db
+   LOG_PATH=./bot.log
+
+3. Run the one-time OAuth flow (requires a browser)
+   python main.py init-auth
+
+   This saves a token file to SCHWAB_TOKEN_PATH. Only needs to be done once.
+   The token auto-refreshes on every run as long as the bot runs at least once every 7 days.
+
+4. Run a dry-run check
+   python main.py run
+
+5. Verify the output
+   python main.py status    # live position + current regime
+   python main.py history   # confirm the dry-run was logged

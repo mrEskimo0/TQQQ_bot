@@ -1,0 +1,25 @@
+# Virtual environment
+venv/
+
+# Secrets and local config
+.env
+info.txt
+
+# OAuth token (contains credentials — never commit)
+*.json
+
+# Database
+*.db
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
