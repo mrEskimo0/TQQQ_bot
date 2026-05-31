@@ -104,8 +104,13 @@ git add -f filename.json
 
 Schedule with cron to run Monday–Friday at 4:45 PM ET (20:45 UTC, or 21:45 UTC Nov–Mar for EST):
 
+sudo mkdir -p /var/lib/tqqq-bot /var/log/tqqq-bot
+sudo chown $USER:$USER /var/lib/tqqq-bot /var/log/tqqq-bot
+
 ```bash
-45 20 * * 1-5 /opt/tqqq-bot/venv/bin/python /opt/tqqq-bot/main.py run >> /var/log/tqqq-bot/bot.log 2>&1
+45 16 * * 1-5 /opt/tqqq-bot/venv/bin/python
+  /opt/tqqq-bot/main.py run >> /var/log/tqqq-bot/bot.log
+  2>&1
 ```
 
 Expected server layout:

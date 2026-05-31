@@ -19,8 +19,15 @@ logger = setup_logger("tqqq_bot", config.LOG_PATH, config.LOG_LEVEL)
 
 def cmd_run(_args):
     from bot.trader import run
+    from bot.notifier import send_run_result
     db = StateDB(config.DB_PATH)
-    run(config, db)
+    try:
+        run(config, db)
+        send_run_result(success=True, cfg=config)
+    except Exception as exc:
+        logger.exception("Unhandled error during run")
+        send_run_result(success=False, cfg=config, exc=exc)
+        raise
 
 
 def cmd_init_auth(_args):
