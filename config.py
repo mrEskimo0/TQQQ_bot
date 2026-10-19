@@ -25,11 +25,7 @@ class Config(BaseSettings):
     LOG_PATH: str = "/var/log/tqqq-bot/bot.log"
 
     # Notifications (optional)
-    NOTIFY_EMAIL: str = ""
-    SMTP_HOST: str = ""
-    SMTP_PORT: int = 587
-    SMTP_USER: str = ""
-    SMTP_PASS: str = ""
+    DISCORD_WEBHOOK_URL: str = ""
 
     # Trading
     DRY_RUN: bool = True

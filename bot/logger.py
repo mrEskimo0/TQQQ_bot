@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 
-def setup_logger(name: str, log_path: str, log_level: str) -> logging.Logger:
+def setup_logger(name: str | None, log_path: str, log_level: str) -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(getattr(logging, log_level))
 

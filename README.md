@@ -27,7 +27,7 @@ bot/
   trader.py      Core trading loop — reads account, evaluates regime, places orders
   state.py       SQLite-backed persistence (position and trade history)
   logger.py      Configures console + file logging
-  notifier.py    Optional email notifications on trades
+  notifier.py    Optional Discord webhook notifications
 ```
 
 ---
@@ -50,13 +50,9 @@ All settings are read from a `.env` file in the project root.
 | `SMA_PERIOD` | No | `200` | SMA lookback period in trading days |
 | `TICKER` | No | `TQQQ` | Risk-on ticker |
 | `SAFE_TICKER` | No | `BIL` | Risk-off ticker |
-| `NOTIFY_EMAIL` | No | — | Email address for trade notifications |
-| `SMTP_HOST` | No | — | SMTP server hostname |
-| `SMTP_PORT` | No | `587` | SMTP server port |
-| `SMTP_USER` | No | — | SMTP username |
-| `SMTP_PASS` | No | — | SMTP password |
+| `DISCORD_WEBHOOK_URL` | No | — | Discord webhook for trade and heartbeat notifications |
 
-Email notifications are silently skipped if any of `NOTIFY_EMAIL`, `SMTP_HOST`, `SMTP_USER`, or `SMTP_PASS` are unset.
+Every run posts exactly one Discord message: a trade confirmation (BUY/SELL), or a heartbeat explaining why nothing was traded (fully invested, no cash, below SMA). Failed runs post the traceback. Messages also show the token age and warn once it reaches 6 days. Notifications are skipped if `DISCORD_WEBHOOK_URL` is unset.
 
 ---
 
@@ -73,7 +69,7 @@ python main.py history      # last 20 trades from the database
 
 ## OAuth Token
 
-The Schwab API uses OAuth 2.0. The access token expires every 30 minutes and is automatically refreshed by schwab-py on each API call. The refresh token has a 7-day expiry window that resets on every refresh — so as long as the bot runs at least once per week the token stays permanently valid.
+The Schwab API uses OAuth 2.0. The access token expires every 30 minutes and is automatically refreshed by schwab-py on each API call. The refresh token **hard-expires 7 days after `init-auth`** — refreshing does not extend it. Re-run `init-auth` and copy the new token to the server at least once a week; the Discord notifications warn when the token is 6+ days old.
 
 The token is stored as a JSON file at `SCHWAB_TOKEN_PATH`. It must be generated once locally (on a machine with a browser) via `python main.py init-auth`, then copied to the server.
 
@@ -108,9 +104,7 @@ sudo mkdir -p /var/lib/tqqq-bot /var/log/tqqq-bot
 sudo chown $USER:$USER /var/lib/tqqq-bot /var/log/tqqq-bot
 
 ```bash
-45 16 * * 1-5 /opt/tqqq-bot/venv/bin/python
-  /opt/tqqq-bot/main.py run >> /var/log/tqqq-bot/bot.log
-  2>&1
+35 9 * * 1-5 /root/tqqq_bot/venv/bin/python3 /root/tqqq_bot/main.py run >> /var/log/tqqq-bot/bot.log 2>&1
 ```
 
 Expected server layout:

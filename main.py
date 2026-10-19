@@ -9,24 +9,28 @@ Usage:
   python main.py history      # recent trade history
 """
 import argparse
+import logging
 
 from config import config
 from bot.logger import setup_logger
 from bot.state import StateDB
 
-logger = setup_logger("tqqq_bot", config.LOG_PATH, config.LOG_LEVEL)
+# Attach handlers to the root logger so bot.* module logs reach the console and log file
+setup_logger(None, config.LOG_PATH, config.LOG_LEVEL)
+# httpx logs every request URL at INFO, which would leak the Discord webhook token
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logger = logging.getLogger("tqqq_bot")
 
 
 def cmd_run(_args):
     from bot.trader import run
-    from bot.notifier import send_run_result
+    from bot.notifier import send_failure
     db = StateDB(config.DB_PATH)
     try:
         run(config, db)
-        send_run_result(success=True, cfg=config)
     except Exception as exc:
         logger.exception("Unhandled error during run")
-        send_run_result(success=False, cfg=config, exc=exc)
+        send_failure(config.DISCORD_WEBHOOK_URL, exc)
         raise
 
 

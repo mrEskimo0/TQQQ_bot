@@ -3,6 +3,7 @@ Thin wrapper around schwab-py for the operations this bot needs.
 """
 import json
 import logging
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -19,8 +20,8 @@ def get_client(token_path: str, app_key: str, app_secret: str) -> Client:
 
     Uses client_from_access_functions so we can hook into the token write and
     log each refresh. The access token expires every 30 minutes and is refreshed
-    automatically; each refresh also extends the refresh token's 7-day window,
-    so as long as the bot runs daily the token stays permanently valid.
+    automatically, but the refresh token hard-expires 7 days after init-auth —
+    refreshing does not extend it, so init-auth must be re-run weekly.
     """
     path = Path(token_path)
     if not path.exists():
@@ -44,6 +45,16 @@ def get_client(token_path: str, app_key: str, app_secret: str) -> Client:
         token_read_func=lambda: token,
         token_write_func=token_write_func,
     )
+
+
+def get_token_age_days(token_path: str) -> Optional[float]:
+    """Days since init-auth created the token file, or None if it can't be read."""
+    try:
+        with open(token_path) as f:
+            created = json.load(f)["creation_timestamp"]
+    except (OSError, KeyError, ValueError):
+        return None
+    return (time.time() - created) / 86400
 
 
 def get_price_history(client: Client, ticker: str, num_days: int = 250) -> list[dict]:
