@@ -10,28 +10,49 @@ Usage:
 """
 import argparse
 import logging
+import os
+import sys
+import traceback
+from pathlib import Path
 
-from config import config
-from bot.logger import setup_logger
-from bot.state import StateDB
+from bot.notifier import send_failure
 
-# Attach handlers to the root logger so bot.* module logs reach the console and log file
-setup_logger(None, config.LOG_PATH, config.LOG_LEVEL)
+# Exit code meaning "failed, but Discord was already notified" — run_bot.sh skips its own alert
+EXIT_NOTIFIED = 3
+
+try:
+    from config import config
+    from bot.logger import setup_logger
+    from bot.state import StateDB
+
+    # Attach handlers to the root logger so bot.* module logs reach the console and log file
+    setup_logger(None, config.LOG_PATH, config.LOG_LEVEL)
+except Exception as exc:
+    # Config failed to load, so read the webhook straight from .env to report it
+    from dotenv import dotenv_values
+    webhook = (
+        dotenv_values(Path(__file__).resolve().parent / ".env").get("DISCORD_WEBHOOK_URL")
+        or os.environ.get("DISCORD_WEBHOOK_URL", "")
+    )
+    # No logger yet — print the traceback to stderr, which run_bot.sh appends to the log
+    traceback.print_exc()
+    sys.exit(EXIT_NOTIFIED if send_failure(webhook, exc, title="Startup FAILED") else 1)
+
+
 # httpx logs every request URL at INFO, which would leak the Discord webhook token
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger("tqqq_bot")
 
 
 def cmd_run(_args):
-    from bot.trader import run
-    from bot.notifier import send_failure
-    db = StateDB(config.DB_PATH)
     try:
+        from bot.trader import run
+        db = StateDB(config.DB_PATH)
         run(config, db)
     except Exception as exc:
+        # Already logged here, so exit instead of re-raising (which would print the traceback twice)
         logger.exception("Unhandled error during run")
-        send_failure(config.DISCORD_WEBHOOK_URL, exc)
-        raise
+        sys.exit(EXIT_NOTIFIED if send_failure(config.DISCORD_WEBHOOK_URL, exc) else 1)
 
 
 def cmd_init_auth(_args):

@@ -104,8 +104,18 @@ sudo mkdir -p /var/lib/tqqq-bot /var/log/tqqq-bot
 sudo chown $USER:$USER /var/lib/tqqq-bot /var/log/tqqq-bot
 
 ```bash
-35 9 * * 1-5 /root/tqqq_bot/venv/bin/python3 /root/tqqq_bot/main.py run >> /var/log/tqqq-bot/bot.log 2>&1
+35 9 * * 1-5 /root/tqqq_bot/run_bot.sh
 ```
+
+`run_bot.sh` runs the bot and posts to Discord if it fails in a way the bot can't report itself (missing `.env`, broken venv, crash before startup). It reads its own copy of the webhook from `/etc/tqqq-bot.webhook`, falling back to `.env`:
+
+```bash
+chmod +x /root/tqqq_bot/run_bot.sh
+echo 'https://discord.com/api/webhooks/...' > /etc/tqqq-bot.webhook
+chmod 600 /etc/tqqq-bot.webhook
+```
+
+The bot exits with code `3` when it failed but already sent its own Discord alert; the wrapper skips its alert in that case.
 
 Expected server layout:
 ```
