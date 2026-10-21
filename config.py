@@ -2,10 +2,12 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator, model_validator
 
+BASE_DIR = Path(__file__).resolve().parent
+
 
 class Config(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=BASE_DIR / ".env",
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -14,7 +16,7 @@ class Config(BaseSettings):
     SCHWAB_APP_KEY: str
     SCHWAB_APP_SECRET: str
     SCHWAB_ACCOUNT_HASH: str = ""
-    SCHWAB_TOKEN_PATH: str = "./schwab_token.json"
+    SCHWAB_TOKEN_PATH: str = str(BASE_DIR / "schwab_token.json")
     SCHWAB_CALLBACK_URL: str = "https://127.0.0.1:8182"
 
     # Database
